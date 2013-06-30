@@ -178,6 +178,8 @@ extern vgui::IInputInternal *g_InputInternal;
 
 extern IClientMode *GetClientModeNormal();
 
+extern INetworkStringTable *g_StringTableGameRules; // Get the GameRules stringtable pointer to reset it in ResetStringTablePointers.
+
 // IF YOU ADD AN INTERFACE, EXTERN IT IN THE HEADER FILE.
 IVEngineClient	*engine = NULL;
 IVModelRender *modelrender = NULL;
@@ -1703,6 +1705,8 @@ void CHLClient::ResetStringTablePointers()
 	g_pStringTableServerPopFiles = NULL;
 	g_pStringTableServerMapCycleMvM = NULL;
 #endif
+
+	g_StringTableGameRules = NULL;
 }
 
 //-----------------------------------------------------------------------------

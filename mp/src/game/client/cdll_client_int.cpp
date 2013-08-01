@@ -104,6 +104,7 @@
 #include "replay/vgui/replayperformanceeditor.h"
 #endif
 #include "vgui/ILocalize.h"
+#include "vgui/IVGui.h"
 #include "ixboxsystem.h"
 #include "ipresence.h"
 #include "engine/imatchmaking.h"
@@ -984,6 +985,8 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 
 		g_pSourceVR->GetViewportBounds( ISourceVirtualReality::VREye_Left, NULL, NULL, &nViewportWidth, &nViewportHeight );
 		vgui::surface()->SetFullscreenViewport( 0, 0, nViewportWidth, nViewportHeight );
+
+		vgui::ivgui()->SetVRMode( true );
 	}
 
 	if (!Initializer::InitializeAllObjects())

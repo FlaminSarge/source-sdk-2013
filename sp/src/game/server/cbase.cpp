@@ -281,7 +281,7 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			Q_snprintf( szBuffer,
 						sizeof(szBuffer),
 						"(%0.2f) output: (%s,%s) -> (%s,%s,%.1f)(%s)\n",
-						engine->GetServerTime(),
+						gpGlobals->curtime,
 						pCaller ? STRING(pCaller->m_iClassname) : "NULL",
 						pCaller ? STRING(pCaller->GetEntityName()) : "NULL",
 						STRING(ev->m_iTarget),
@@ -298,7 +298,7 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			Q_snprintf( szBuffer,
 						sizeof(szBuffer),
 						"(%0.2f) output: (%s,%s) -> (%s,%s)(%s)\n",
-						engine->GetServerTime(),
+						gpGlobals->curtime,
 						pCaller ? STRING(pCaller->m_iClassname) : "NULL",
 						pCaller ? STRING(pCaller->GetEntityName()) : "NULL", STRING(ev->m_iTarget),
 						STRING(ev->m_iTargetInput),
@@ -767,7 +767,7 @@ void CEventQueue::Dump( void )
 {
 	EventQueuePrioritizedEvent_t *pe = m_Events.m_pNext;
 
-	Msg( "Dumping event queue. Current time is: %.2f\n", engine->GetServerTime() );
+	Msg( "Dumping event queue. Current time is: %.2f\n", gpGlobals->curtime );
 
 	while ( pe != NULL )
 	{
@@ -795,7 +795,7 @@ void CEventQueue::AddEvent( const char *target, const char *targetInput, variant
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
-	newEvent->m_flFireTime = engine->GetServerTime() + fireDelay;	// priority key in the priority queue
+	newEvent->m_flFireTime = gpGlobals->curtime + fireDelay;	// priority key in the priority queue
 	newEvent->m_iTarget = MAKE_STRING( target );
 	newEvent->m_pEntTarget = NULL;
 	newEvent->m_iTargetInput = MAKE_STRING( targetInput );
@@ -814,7 +814,7 @@ void CEventQueue::AddEvent( CBaseEntity *target, const char *targetInput, varian
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
-	newEvent->m_flFireTime = engine->GetServerTime() + fireDelay;	// primary priority key in the priority queue
+	newEvent->m_flFireTime = gpGlobals->curtime + fireDelay;	// primary priority key in the priority queue
 	newEvent->m_iTarget = NULL_STRING;
 	newEvent->m_pEntTarget = target;
 	newEvent->m_iTargetInput = MAKE_STRING( targetInput );
@@ -885,7 +885,7 @@ void CEventQueue::ServiceEvents( void )
 
 	EventQueuePrioritizedEvent_t *pe = m_Events.m_pNext;
 
-	while ( pe != NULL && pe->m_flFireTime <= engine->GetServerTime() )
+	while ( pe != NULL && pe->m_flFireTime <= gpGlobals->curtime )
 	{
 		MDLCACHE_CRITICAL_SECTION();
 
@@ -1171,7 +1171,7 @@ int CEventQueue::Restore( IRestore &restore )
 			AddEvent( tmpEvent.m_pEntTarget,
 					  STRING(tmpEvent.m_iTargetInput),
 					  tmpEvent.m_VariantValue,
-					  tmpEvent.m_flFireTime - engine->GetServerTime(),
+					  tmpEvent.m_flFireTime - gpGlobals->curtime,
 					  tmpEvent.m_pActivator,
 					  tmpEvent.m_pCaller,
 					  tmpEvent.m_iOutputID );
@@ -1181,7 +1181,7 @@ int CEventQueue::Restore( IRestore &restore )
 			AddEvent( STRING(tmpEvent.m_iTarget),
 					  STRING(tmpEvent.m_iTargetInput),
 					  tmpEvent.m_VariantValue,
-					  tmpEvent.m_flFireTime - engine->GetServerTime(),
+					  tmpEvent.m_flFireTime - gpGlobals->curtime,
 					  tmpEvent.m_pActivator,
 					  tmpEvent.m_pCaller,
 					  tmpEvent.m_iOutputID );

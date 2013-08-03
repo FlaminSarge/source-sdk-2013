@@ -13,5 +13,9 @@ Pull requests for bug fixes are welcome, features which would be beneficial for 
 
 
 - [FlaminSarge](https://github.com/FlaminSarge)
- - [Fixed player jingle functionality](https://github.com/jimbomcb/source-sdk-2013/commit/572eb0eb093c91a34438f78c4576676e61b3ac64)
+ - [Fixed player jingle functionality](https://github.com/jimbomcb/source-sdk-2013/pull/1)
+
+
+- [Alan Edwardes](https://github.com/alanedwardes)
+ - [Custom URL handlers for the vgui::HTML panel now pass the URL and protocol.](https://github.com/jimbomcb/source-sdk-2013/pull/2)
 

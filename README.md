@@ -18,6 +18,7 @@ Pull requests for bug fixes are welcome, features which would be beneficial for 
 
 - [Alan Edwardes](https://github.com/alanedwardes)
  - [Custom URL handlers for the vgui::HTML panel now pass the URL and protocol.](https://github.com/jimbomcb/source-sdk-2013/pull/2)
+ - [Changed VBSP to check both the EXECUTABLE_PATH and the MOD path for FDG files.](https://github.com/jimbomcb/source-sdk-2013/pull/3)
 
 # Source SDK 2013
 

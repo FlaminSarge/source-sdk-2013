@@ -179,7 +179,20 @@ IMaterial *CreateTempMaterialForPlayerLogo( int iPlayerIndex, player_info_t *inf
 	if ( !filesystem->FileExists( fulltexname ) )
 	{
 		char custname[ 512 ];
-		Q_snprintf( custname, sizeof( custname ), "download/user_custom/%c%c/%s.dat", logohex[0], logohex[1], logohex );
+		char searchPaths[ 512 ];
+		filesystem->GetSearchPath( "DOWNLOAD", true, searchPaths, sizeof( searchPaths ) );
+		//use first path found
+		char *downloadPath = strtok( searchPaths, ";" );
+		//get download folder relative to game folder (returns false if GetSearchPath returned some invalid path)
+		if (!filesystem->FullPathToRelativePathEx( downloadPath, "GAME", searchPaths, 512 ))
+		{
+			Q_snprintf( searchPaths, 512, "");
+		}
+		else
+		{
+			V_FixupPathName( searchPaths, 512, searchPaths );
+		}
+		Q_snprintf( custname, sizeof( custname ), "%suser_custom/%c%c/%s.dat", searchPaths, logohex[0], logohex[1], logohex );
 		// it may have been downloaded but not copied under materials folder
 		if ( !filesystem->FileExists( custname ) )
 			return NULL; // not downloaded yet

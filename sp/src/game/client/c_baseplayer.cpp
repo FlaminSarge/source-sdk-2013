@@ -2178,7 +2178,20 @@ void C_BasePlayer::PlayPlayerJingle()
 	if ( !filesystem->FileExists( fullsoundname ) )
 	{
 		char custname[ 512 ];
-		Q_snprintf( custname, sizeof( custname ), "download/user_custom/%c%c/%s.dat", soundhex[0], soundhex[1], soundhex );
+		char searchPaths[ 512 ];
+		filesystem->GetSearchPath( "DOWNLOAD", true, searchPaths, sizeof( searchPaths ) );
+		//use first path found
+		char *downloadPath = strtok( searchPaths, ";" );
+		//get download folder relative to game folder (returns false if GetSearchPath returned some invalid path)
+		if (!filesystem->FullPathToRelativePathEx( downloadPath, "GAME", searchPaths, 512 ))
+		{
+			Q_snprintf( searchPaths, 512, "");
+		}
+		else
+		{
+			V_FixupPathName( searchPaths, 512, searchPaths );
+		}
+		Q_snprintf( custname, sizeof( custname ), "%suser_custom/%c%c/%s.dat", searchPaths, soundhex[0], soundhex[1], soundhex );
 		// it may have been downloaded but not copied under materials folder
 		if ( !filesystem->FileExists( custname ) )
 			return; // not downloaded yet

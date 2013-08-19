@@ -2171,7 +2171,7 @@ void C_BasePlayer::PlayPlayerJingle()
 	char soundhex[ 16 ];
 	Q_binarytohex( (byte *)&info.customFiles[1], sizeof( info.customFiles[1] ), soundhex, sizeof( soundhex ) );
 
-	// See if logo has been downloaded.
+	// See if jingle has been downloaded.
 	char fullsoundname[ 512 ];
 	Q_snprintf( fullsoundname, sizeof( fullsoundname ), "sound/temp/%s.wav", soundhex );
 
@@ -2179,27 +2179,31 @@ void C_BasePlayer::PlayPlayerJingle()
 	{
 		char custname[ 512 ];
 		char searchPaths[ 512 ];
+
+		//find the download path, using the first path found
 		filesystem->GetSearchPath( "DOWNLOAD", true, searchPaths, sizeof( searchPaths ) );
-		//use first path found
 		char *downloadPath = strtok( searchPaths, ";" );
-		//get download folder relative to game folder (returns false if GetSearchPath returned some invalid path)
-		if (!filesystem->FullPathToRelativePathEx( downloadPath, "GAME", searchPaths, 512 ))
+
+		//get download folder relative to game folder, or empty it out (to use root) if no download path found; GAME_WRITE works too
+		if (downloadPath == NULL || !filesystem->FullPathToRelativePathEx( downloadPath, "GAME", searchPaths, 512 ))
 		{
-			Q_snprintf( searchPaths, 512, "");
+			Q_strcpy( searchPaths, "" );
 		}
 		else
 		{
+			//just in case
 			V_FixupPathName( searchPaths, 512, searchPaths );
 		}
 		Q_snprintf( custname, sizeof( custname ), "%suser_custom/%c%c/%s.dat", searchPaths, soundhex[0], soundhex[1], soundhex );
-		// it may have been downloaded but not copied under materials folder
+		// it may have been downloaded but not copied under sound folder
 		if ( !filesystem->FileExists( custname ) )
 			return; // not downloaded yet
 
-		// copy from download folder to materials/temp folder
-		// this is done since material system can access only materials/*.vtf files
+		// copy from download folder to sound/temp folder
+		// this is done since sound system can access only sound/*.wav files
+		// TODO: eventually, support mp3 files by looking at .dat file header?
 
-		if ( !engine->CopyLocalFile( custname, fullsoundname) )
+		if ( !engine->CopyLocalFile( custname, fullsoundname ) )
 			return;
 	}
 

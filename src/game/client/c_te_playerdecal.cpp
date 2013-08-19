@@ -180,16 +180,18 @@ IMaterial *CreateTempMaterialForPlayerLogo( int iPlayerIndex, player_info_t *inf
 	{
 		char custname[ 512 ];
 		char searchPaths[ 512 ];
+		//find the download path, using the first path found
 		filesystem->GetSearchPath( "DOWNLOAD", true, searchPaths, sizeof( searchPaths ) );
-		//use first path found
 		char *downloadPath = strtok( searchPaths, ";" );
-		//get download folder relative to game folder (returns false if GetSearchPath returned some invalid path)
-		if (!filesystem->FullPathToRelativePathEx( downloadPath, "GAME", searchPaths, 512 ))
+
+		//get download folder relative to game folder, or empty it out (to use root) if no download path found; GAME_WRITE works too
+		if (downloadPath == NULL || !filesystem->FullPathToRelativePathEx( downloadPath, "GAME", searchPaths, 512 ))
 		{
-			Q_snprintf( searchPaths, 512, "");
+			Q_strcpy( searchPaths, "" );
 		}
 		else
 		{
+			//just in case
 			V_FixupPathName( searchPaths, 512, searchPaths );
 		}
 		Q_snprintf( custname, sizeof( custname ), "%suser_custom/%c%c/%s.dat", searchPaths, logohex[0], logohex[1], logohex );

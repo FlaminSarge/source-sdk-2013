@@ -97,7 +97,7 @@ protected:
 		float wide, tall;
 
 	};
-	void ComputeSlotLayout( SlotLayout_t *rSlot, int nActiveSlot, int nSelectionMode );
+	void ComputeSlotLayout( SlotLayout_t *rSlot, SlotLayout_t *rSlotExtra, int nActiveSlot, int nActivePosition, int nSelectionMode );
 
 	virtual void OnThink();
 	virtual void PerformLayout( void );
@@ -174,12 +174,13 @@ private:
 
 	CPanelAnimationVar( float, m_flTextScan, "TextScan", "1.0" );
 
-	CPanelAnimationVar( int, m_iMaxSlots, "MaxSlots", "6" );
+	CPanelAnimationVar( int, m_iMaxSlots, "MaxSlots", "8" );
 	CPanelAnimationVar( bool, m_bPlaySelectionSounds, "PlaySelectSounds", "1" );
 
 	CTFImagePanel *m_pActiveWeaponBG;
 
 	CItemModelPanel	*m_pModelPanels[MAX_WEAPON_SLOTS];
+	CItemModelPanel *m_pModelPanelsExtra[MAX_WEAPON_POSITIONS];
 
 
 	float m_flDemoStartTime;
@@ -233,6 +234,10 @@ CHudWeaponSelection::CHudWeaponSelection( const char *pElementName ) : CBaseHudW
 	for ( int i = 0; i < MAX_WEAPON_SLOTS; i++ )
 	{
 		m_pModelPanels[i] = new CItemModelPanel( this, VarArgs( "modelpanel%d", i ) );
+	}
+	for ( int i = 0; i < MAX_WEAPON_POSITIONS; i++ )
+	{
+		m_pModelPanelsExtra[i] = new CItemModelPanel( this, VarArgs( "modelpanelextra%d", i ) );
 	}
 }
 
@@ -369,6 +374,10 @@ void CHudWeaponSelection::LevelInit()
 	{
 		m_pModelPanels[i]->SetVisible( false );
 	}
+	for ( int i = 0; i < MAX_WEAPON_POSITIONS; i++ )
+	{
+		m_pModelPanelsExtra[i]->SetVisible( false );
+	}
 	InvalidateLayout( false, true );
 }
 
@@ -385,6 +394,13 @@ void CHudWeaponSelection::LevelShutdown( void )
 		if ( m_pModelPanels[i] )
 		{
 			m_pModelPanels[i]->SetItem( NULL );
+		}
+	}
+	for ( int i = 0; i < MAX_WEAPON_POSITIONS; i++ )
+	{
+		if ( m_pModelPanelsExtra[i] )
+		{
+			m_pModelPanelsExtra[i]->SetItem( NULL );
 		}
 	}
 }
@@ -431,7 +447,7 @@ int CHudWeaponSelection::GetNumVisibleSlots()
 // Purpose: Figure out where to put the item model panels for this weapon
 //			selection slot layout
 //-----------------------------------------------------------------------------
-void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, int nActiveSlot, int nSelectionMode )
+void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, SlotLayout_t *rSlotExtra, int nActiveSlot, int nActivePosition, int nSelectionMode )
 {
 	int nNumSlots = GetNumVisibleSlots();
 	if ( nNumSlots <= 0 )
@@ -459,6 +475,13 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, int nActiveSlo
 				{
 					rSlot[i].wide = m_flLargeBoxWide;
 					rSlot[i].tall = m_flLargeBoxTall;
+					for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++)
+					{
+						rSlotExtra[slotpos].wide = m_flSmallBoxWide;
+						rSlotExtra[slotpos].tall = m_flSmallBoxTall;
+						rSlotExtra[slotpos].y = ypos + ( m_flLargeBoxTall / 2 ) - ( m_flSmallBoxTall / 2 );
+						rSlotExtra[slotpos].x = xStartPos - ( m_flLargeBoxWide + m_flBoxGap + ( m_flSmallBoxWide ) * ( slotpos + 1 ) );
+					}
 				}
 				else
 				{
@@ -482,10 +505,10 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, int nActiveSlo
 
 			// Modifiers for the four directions. Used to change the x and y offsets
 			// of each box based on which bucket we're drawing. Bucket directions are
-			// 0 = UP, 1 = RIGHT, 2 = DOWN, 3 = LEFT
+			// 0 = UP, 1 = RIGHT, 2 = DOWN, 3 = LEFT, 4 = DOWNLEFT, 5 = DOWNRIGHT, 6 = UPRIGHT, 7 = UPLEFT
 
-			int xModifiers[] = { 0, 1, 0, -1, -1, 1 };
-			int yModifiers[] = { -1, 0, 1, 0, 1, 1 };
+			int xModifiers[] = { 0, 1, 0, -1, -1, 1, 1, -1 };
+			int yModifiers[] = { -1, 0, 1, 0, 1, 1, -1, -1 };
 
 			int boxWide = m_flPlusStyleBoxWide;
 			int boxTall = m_flPlusStyleBoxTall;
@@ -559,9 +582,11 @@ void CHudWeaponSelection::PerformLayout( void )
 	// calculate where to start drawing
 
 	int iActiveSlot = (pSelectedWeapon ? pSelectedWeapon->GetSlot() : -1);
+	int iActivePosition = (pSelectedWeapon ? pSelectedWeapon->GetPosition() : -1);
 
 	SlotLayout_t rSlot[ MAX_WEAPON_SLOTS ];
-	ComputeSlotLayout( rSlot, iActiveSlot, fastswitch );
+	SlotLayout_t rSlotExtra[ MAX_WEAPON_POSITIONS ];
+	ComputeSlotLayout( rSlot, rSlotExtra, iActiveSlot, iActivePosition, fastswitch );
 
 	// iterate over all the weapon slots
 	for ( int i = 0; i < m_iMaxSlots; i++ )
@@ -570,31 +595,41 @@ void CHudWeaponSelection::PerformLayout( void )
 
 		if ( i == iActiveSlot )
 		{
+			int iUsedPositions = 0;
 			for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
 			{
-				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
+				m_pModelPanelsExtra[slotpos]->SetVisible( false );
+				int iActualPos = ( iActivePosition + slotpos ) % MAX_WEAPON_POSITIONS;
+				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, iActualPos);
 				if ( !pWeapon )
 					continue;
 
 				if ( !pWeapon->VisibleInWeaponSelection() )
 					continue;
+				
+				bool bSelected = iActivePosition == iActualPos;
+				
+				CItemModelPanel *pModelPanel = bSelected ? m_pModelPanels[i] : m_pModelPanelsExtra[iUsedPositions];
+				SlotLayout_t rSlotLayout = bSelected ? rSlot[i] : rSlotExtra[iUsedPositions];
 
-				m_pModelPanels[i]->SetItem( pWeapon->GetAttributeContainer()->GetItem() );
+				pModelPanel->SetItem( pWeapon->GetAttributeContainer()->GetItem() );
 
-				m_pModelPanels[i]->SetSize( rSlot[i].wide, rSlot[ i ].tall );
+				pModelPanel->SetSize( rSlotLayout.wide, rSlotLayout.tall );
 
 				vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( GetScheme() );
 				if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
 				{
-					m_pModelPanels[i]->SetBorder( pScheme->GetBorder("TFFatLineBorderBlueBG") );
+					pModelPanel->SetBorder( pScheme->GetBorder("TFFatLineBorderBlueBG") );
 				}
 				else
 				{
-					m_pModelPanels[i]->SetBorder( pScheme->GetBorder("TFFatLineBorderRedBG") );
+					pModelPanel->SetBorder( pScheme->GetBorder("TFFatLineBorderRedBG") );
 				}
 
-				m_pModelPanels[i]->SetPos( rSlot[i].x, rSlot[ i ].y );
-				m_pModelPanels[i]->SetVisible( true );
+				pModelPanel->SetPos( rSlotLayout.x, rSlotLayout.y );
+				pModelPanel->SetVisible( true );
+				if (!bSelected)
+					iUsedPositions++;
 			}
 		}
 		else
@@ -960,6 +995,13 @@ void CHudWeaponSelection::HideSelection( void )
 			m_pModelPanels[i]->SetVisible( false );
 		}
 	}
+	for ( int i = 0; i < MAX_WEAPON_POSITIONS; i++ )
+	{
+		if ( m_pModelPanelsExtra[i] )
+		{
+			m_pModelPanelsExtra[i]->SetVisible( false );
+		}
+	}
 
 	m_flSelectionTime = 0;
 	CBaseHudWeaponSelection::HideSelection();
@@ -1223,6 +1265,13 @@ void CHudWeaponSelection::FireGameEvent( IGameEvent *event )
 			if ( m_pModelPanels[i] )
 			{
 				m_pModelPanels[i]->SetVisible( false );
+			}
+		}
+		for ( int i = 0; i < MAX_WEAPON_POSITIONS; i++ )
+		{
+			if ( m_pModelPanelsExtra[i] )
+			{
+				m_pModelPanelsExtra[i]->SetVisible( false );
 			}
 		}
 

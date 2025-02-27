@@ -457,6 +457,10 @@ int CBaseCombatWeapon::GetWeaponFlags( void ) const
 //-----------------------------------------------------------------------------
 int CBaseCombatWeapon::GetSlot( void ) const
 {
+	if (m_bOverrideBucketData)
+	{
+		return m_iBucketOverride;
+	}
 	return GetWpnData().iSlot;
 }
 
@@ -465,6 +469,10 @@ int CBaseCombatWeapon::GetSlot( void ) const
 //-----------------------------------------------------------------------------
 int CBaseCombatWeapon::GetPosition( void ) const
 {
+	if (m_bOverrideBucketData)
+	{
+		return m_iBucketPositionOverride;
+	}
 	return GetWpnData().iPosition;
 }
 
@@ -2583,6 +2591,9 @@ BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
 	DEFINE_PRED_FIELD( m_iSecondaryAmmoType, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iClip1, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),			
 	DEFINE_PRED_FIELD( m_iClip2, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),			
+	DEFINE_PRED_FIELD( m_bOverrideBucketData, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),			
+	DEFINE_PRED_FIELD( m_iBucketOverride, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),			
+	DEFINE_PRED_FIELD( m_iBucketPositionOverride, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),			
 
 	DEFINE_PRED_FIELD( m_nViewModelIndex, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 
@@ -2641,6 +2652,9 @@ BEGIN_DATADESC( CBaseCombatWeapon )
 	DEFINE_FIELD( m_iSecondaryAmmoType, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iClip1, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iClip2, FIELD_INTEGER ),
+	DEFINE_FIELD( m_bOverrideBucketData, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_iBucketOverride, FIELD_INTEGER ),
+	DEFINE_FIELD( m_iBucketPositionOverride, FIELD_INTEGER ),
 	DEFINE_FIELD( m_bFiresUnderwater, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bAltFiresUnderwater, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_fMinRange1, FIELD_FLOAT ),
@@ -2838,6 +2852,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 	SendPropIntWithMinusOneFlag( SENDINFO(m_iClip2 ), 8 ),
 	SendPropInt( SENDINFO(m_iPrimaryAmmoType ), 8 ),
 	SendPropInt( SENDINFO(m_iSecondaryAmmoType ), 8 ),
+	SendPropBool( SENDINFO(m_bOverrideBucketData ) ),
+	SendPropInt( SENDINFO(m_iBucketOverride ), 4, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO(m_iBucketPositionOverride ), 5, SPROP_UNSIGNED ),
 
 	SendPropInt( SENDINFO( m_nViewModelIndex ), VIEWMODEL_INDEX_BITS, SPROP_UNSIGNED ),
 	SendPropModelIndex( SENDINFO( m_nCustomViewmodelModelIndex ) ),
@@ -2853,6 +2870,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 	RecvPropIntWithMinusOneFlag( RECVINFO(m_iClip2 )),
 	RecvPropInt( RECVINFO(m_iPrimaryAmmoType )),
 	RecvPropInt( RECVINFO(m_iSecondaryAmmoType )),
+	RecvPropBool( RECVINFO(m_bOverrideBucketData )),
+	RecvPropInt( RECVINFO(m_iBucketOverride )),
+	RecvPropInt( RECVINFO(m_iBucketPositionOverride )),
 
 	RecvPropInt( RECVINFO( m_nViewModelIndex ) ),
 	RecvPropInt( RECVINFO( m_nCustomViewmodelModelIndex ) ),

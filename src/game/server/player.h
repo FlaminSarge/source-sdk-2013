@@ -533,6 +533,7 @@ public:
 	bool 					HasWeapons( void );// do I have ANY weapons?
 	virtual void			SelectLastItem(void);
 	virtual void 			SelectItem( const char *pstr, int iSubType = 0 );
+	virtual void 			SelectItem( CBaseCombatWeapon *pWeapon );
 	void					ItemPreFrame( void );
 	virtual void			ItemPostFrame( void );
 	virtual CBaseEntity		*GiveNamedItem( const char *szName, int iSubType = 0 );

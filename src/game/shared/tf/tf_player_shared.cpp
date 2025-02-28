@@ -11683,6 +11683,34 @@ void CTFPlayer::SelectItem( const char *pstr, int iSubType /*= 0*/ )
 	Weapon_Switch( pItem );
 }
 
+void CTFPlayer::SelectItem( CBaseCombatWeapon *pItem )
+{
+	// This is basically a copy from the base class with addition of Weapon_CanSwitchTo
+	// We're not calling BaseClass::SelectItem on purpose to prevent breaking other games
+	// that might rely on not calling Weapon_CanSwitchTo
+
+	if (!pItem)
+		return;
+
+	if ( pItem->GetOwner() != this )
+		return;
+
+	if( GetObserverMode() != OBS_MODE_NONE )
+		return;// Observers can't select things.
+
+	if ( !Weapon_ShouldSelectItem( pItem ) )
+		return;
+
+	// FIX, this needs to queue them up and delay
+	// Make sure the current weapon can be holstered
+	if ( !Weapon_CanSwitchTo( pItem ) )
+		return;
+
+	ResetAutoaim();
+
+	Weapon_Switch( pItem );
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose:

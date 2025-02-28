@@ -375,7 +375,7 @@ void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 		if ( weapon )
 		{
 			VPROF( "player->SelectItem()" );
-			player->SelectItem( weapon->GetName(), ucmd->weaponsubtype );
+			player->SelectItem( weapon );
 		}
 	}
 

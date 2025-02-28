@@ -627,6 +627,7 @@ void CHudWeaponSelection::PerformLayout( void )
 				if (!bSelected)
 				{
 					pModelPanel->SetNameOnly( true );
+					pModelPanel->SetStandardTextColor( true );
 					iUsedPositions++;
 				}
 			}
@@ -647,6 +648,7 @@ void CHudWeaponSelection::PerformLayout( void )
 				m_pModelPanels[i]->SetBorder( pScheme->GetBorder("TFFatLineBorder") );
 				m_pModelPanels[i]->SetVisible( true );
 				m_pModelPanels[i]->SetNameOnly( true );
+				m_pModelPanels[i]->SetStandardTextColor( true );
 			}
 		}
 	}

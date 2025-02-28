@@ -648,7 +648,7 @@ public:
 	float				GetSpawnTime() { return m_flSpawnTime; }
 
 	
-	virtual void 		SelectItem( const char *pstr, int iSubType = 0 ) OVERRIDE;
+	virtual void 		SelectItem( CBaseCombatWeapon *pWeapon ) OVERRIDE;
 	virtual bool		Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex = 0 ) OVERRIDE;
 	virtual void		Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarget , const Vector *pVelocity ) OVERRIDE;
 

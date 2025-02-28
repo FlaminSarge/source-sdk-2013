@@ -867,7 +867,7 @@ void CBasePlayer::SelectLastItem(void)
 	if ( GetActiveWeapon() && !GetActiveWeapon()->CanHolster() )
 		return;
 
-	SelectItem( m_hLastWeapon.Get()->GetClassname(), m_hLastWeapon.Get()->GetSubType() );
+	SelectItem( m_hLastWeapon.Get() );
 }
 
 
@@ -1014,14 +1014,22 @@ bool CBasePlayer::Weapon_ShouldSelectItem( CBaseCombatWeapon *pWeapon )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CBasePlayer::SelectItem( const char *pstr, int iSubType )
+void CBasePlayer::SelectItem( CBaseCombatWeapon *pItem )
 {
-	if (!pstr)
+	if (!pItem)
 		return;
 
-	CBaseCombatWeapon *pItem = Weapon_OwnsThisType( pstr, iSubType );
+	bool bFound = false;
+	for (int i=0;i<MAX_WEAPONS;i++) 
+	{
+		if ( m_hMyWeapons[i].Get() && m_hMyWeapons[i] == pItem )
+		{
+			bFound = true;
+			break;
+		}
+	}
 
-	if (!pItem)
+	if (!bFound)
 		return;
 
 	if( GetObserverMode() != OBS_MODE_NONE )

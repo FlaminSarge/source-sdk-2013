@@ -377,7 +377,7 @@ public:
 
 	virtual bool		Weapon_ShouldSetLast( CBaseCombatWeapon *pOldWeapon, CBaseCombatWeapon *pNewWeapon ) OVERRIDE;
 	virtual	bool		Weapon_Switch( C_BaseCombatWeapon *pWeapon, int viewmodelindex = 0 ) OVERRIDE;
-	virtual void 		SelectItem( const char *pstr, int iSubType = 0 ) OVERRIDE;
+	virtual void 		SelectItem( C_BaseCombatWeapon *pWeapon ) OVERRIDE;
 
 	void				Weapon_PoseParamOverride( CTFWeaponBase *pOldWeapon, CTFWeaponBase *pNewWeapon );
 

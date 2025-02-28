@@ -115,13 +115,13 @@ protected:
 #endif // GLOWS_ENABLE
 
 	int			m_bloodColor;			// color of blood particless
+	CHandle<C_BaseCombatWeapon>		m_hMyWeapons[MAX_WEAPONS];
 
 private:
 	bool				ComputeLOS( const Vector &vecEyePosition, const Vector &vecTarget ) const;
 
 	CNetworkArray( int, m_iAmmo, MAX_AMMO_TYPES );
 
-	CHandle<C_BaseCombatWeapon>		m_hMyWeapons[MAX_WEAPONS];
 	CHandle< C_BaseCombatWeapon > m_hActiveWeapon;
 
 #ifdef GLOWS_ENABLE

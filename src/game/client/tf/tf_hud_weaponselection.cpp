@@ -629,11 +629,16 @@ void CHudWeaponSelection::PerformLayout( void )
 				pModelPanel->SetPos( rSlotLayout.x, rSlotLayout.y );
 				pModelPanel->SetVisible( true );
 				if (!bSelected)
+				{
+					pModelPanel->SetNameOnly( true );
 					iUsedPositions++;
+				}
 			}
 		}
 		else
 		{
+			m_pModelPanels[i]->SetSize( rSlot[i].wide, rSlot[ i ].tall );
+			m_pModelPanels[i]->SetPos( rSlot[i].x, rSlot[ i ].y );
 			// check to see if there is a weapons in this bucket
 			if ( GetFirstPos( i ) )
 			{
@@ -642,12 +647,10 @@ void CHudWeaponSelection::PerformLayout( void )
 					continue;
 
 				m_pModelPanels[i]->SetItem( pWeapon->GetAttributeContainer()->GetItem() );
-				
-				m_pModelPanels[i]->SetSize( rSlot[i].wide, rSlot[ i ].tall );
 				vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( GetScheme() );
 				m_pModelPanels[i]->SetBorder( pScheme->GetBorder("TFFatLineBorder") );
 				m_pModelPanels[i]->SetVisible( true );
-				m_pModelPanels[i]->SetPos( rSlot[i].x, rSlot[ i ].y );
+				m_pModelPanels[i]->SetNameOnly( true );
 			}
 		}
 	}

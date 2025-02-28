@@ -11584,19 +11584,24 @@ void CTFPlayer::Weapon_PoseParamOverride( CTFWeaponBase *pOldWeapon, CTFWeaponBa
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFPlayer::SelectItem( const char *pstr, int iSubType /*= 0*/ )
+void CTFPlayer::SelectItem( CBaseCombatWeapon *pItem )
 {
 	// This is basically a copy from the base class with addition of Weapon_CanSwitchTo
 	// We're not calling BaseClass::SelectItem on purpose to prevent breaking other games
 	// that might rely on not calling Weapon_CanSwitchTo
 
-	if (!pstr)
-		return;
-
-	CBaseCombatWeapon *pItem = Weapon_OwnsThisType( pstr, iSubType );
-
 	if (!pItem)
 		return;
+
+	bool bFound = false;
+	for (int i=0;i<MAX_WEAPONS;i++) 
+	{
+		if ( m_hMyWeapons[i].Get() && m_hMyWeapons[i] == pItem )
+		{
+			bFound = true;
+			break;
+		}
+	}
 
 	if( GetObserverMode() != OBS_MODE_NONE )
 		return;// Observers can't select things.

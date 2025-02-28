@@ -1064,7 +1064,7 @@ void CC_Player_PhysSwap( void )
 			}
 			else
 			{
-				pPlayer->SelectItem( "weapon_physcannon" );
+				//pPlayer->SelectItem( "weapon_physcannon" );
 			}
 		}
 	}
@@ -1096,7 +1096,7 @@ void CC_Player_BugBaitSwap( void )
 			}
 			else
 			{
-				pPlayer->SelectItem( "weapon_bugbait" );
+				//pPlayer->SelectItem( "weapon_bugbait" );
 			}
 		}
 	}
@@ -1110,7 +1110,7 @@ void CC_Player_Use( const CCommand &args )
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() ); 
 	if ( pPlayer)
 	{
-		pPlayer->SelectItem((char *)args[1]);
+		// pPlayer->SelectItem((char *)args[1]);
 	}
 }
 static ConCommand use("use", CC_Player_Use, "Use a particular weapon\t\nArguments: <weapon_name>");
@@ -1564,11 +1564,11 @@ void ClientCommand( CBasePlayer *pPlayer, const CCommand &args )
 		// Subtype may be specified
 		if ( args.ArgC() == 2 )
 		{
-			pPlayer->SelectItem( pcmd, atoi( args[1] ) );
+			//pPlayer->SelectItem( pcmd, atoi( args[1] ) );
 		}
 		else
 		{
-			pPlayer->SelectItem(pcmd);
+			//pPlayer->SelectItem(pcmd);
 		}
 	}
 	*/

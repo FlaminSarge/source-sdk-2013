@@ -274,6 +274,7 @@ public:
 	void	SetSkin( int iSkin );
 	void	SetItemStyle( style_index_t unStyle ) { m_ItemData.SetItemStyleOverride( unStyle ); }
 	void	SetNameOnly( bool bNameOnly ) { m_bNameOnly = bNameOnly; }
+	void	SetStandardTextColor( bool bStandardTextColor ) { m_bStandardTextColor = bStandardTextColor; }
 	void	SetSpecialAttributesOnly( bool bSpecialOnly ) { m_bSpecialAttributesOnly = bSpecialOnly; }
 
 	CEmbeddedItemModelPanel::InventoryImageType_t	GetInventoryImageType() /*const*/													 { return m_pModelPanel->GetInventoryImageType(); }

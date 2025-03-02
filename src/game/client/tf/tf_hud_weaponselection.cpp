@@ -489,6 +489,11 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, SlotLayout_t *
 			for ( int i = 0; i < m_iMaxSlots; i++ )
 			{
 				rSlot[i].y += ypos;
+				if ( i == nActiveSlot )
+				{
+					for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++)
+						rSlotExtra[slotpos].y += ypos;
+				}
 			}
 		}
 		break;

@@ -238,7 +238,7 @@ CHudWeaponSelection::CHudWeaponSelection( const char *pElementName ) : CBaseHudW
 	}
 	for ( int i = 0; i < MAX_WEAPON_POSITIONS; i++ )
 	{
-		m_pModelPanelsExtra[i] = new CItemModelPanel( this, VarArgs( "modelpanelextra%d", i ) );
+		m_pModelPanelsExtra[i] = new CItemModelPanel( this, VarArgs( "modelpanel%d", i % 6 ) );
 	}
 }
 

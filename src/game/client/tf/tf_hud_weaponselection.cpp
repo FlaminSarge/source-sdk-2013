@@ -45,6 +45,7 @@
 
 ConVar tf_weapon_select_demo_start_delay( "tf_weapon_select_demo_start_delay", "1.0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Delay after spawning to start the weapon bucket demo." );
 ConVar tf_weapon_select_demo_time( "tf_weapon_select_demo_time", "0.5", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Time to pulse each weapon bucket upon spawning as a new class. 0 to turn off." );
+ConVar tf_weapon_select_empty_bucket_scale("tf_weapon_select_empty_bucket_scale", "1.0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Scale empty weapon bucket spaces by this amount.", true, 0.0f, true, 1.0f);
 
 //-----------------------------------------------------------------------------
 // Purpose: tf weapon selection hud element
@@ -443,7 +444,10 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, int nActiveSlo
 					// only include slot if visible OR (any slot above visible AND any slot below visible)
 					if ( ( iSlotBits >> i ) && ( iSlotBits & ( ( 1 << ( i + 1 ) ) - 1 ) ) )
 					{
-						// future: scale empty boxes
+						if ( !( iSlotBits & (1 << i) ) )
+						{
+							flHeightScale = tf_weapon_select_empty_bucket_scale.GetFloat();
+						}
 					}
 					else
 					{

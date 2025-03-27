@@ -462,7 +462,7 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, int nActiveSlo
 			{
 				rSlot[i].y = ypos;
 				// only include boxgap if slot was visible
-				ypos += ( rSlot[i].tall + ( rSlot[i].tall > 0 ? m_flBoxGap : 0 ) );
+				ypos += rSlot[i].tall > 0 ? rSlot[i].tall + m_flBoxGap : 0;
 			}
 		}
 		break;

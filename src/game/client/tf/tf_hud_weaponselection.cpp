@@ -426,8 +426,8 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, int nActiveSlo
 	case HUDTYPE_BUCKETS:
 	case HUDTYPE_FASTSWITCH:
 		{
-			int xStartPos = GetWide() - m_flBoxGap - m_flRightMargin;
-			int ypos = 0;
+			float xStartPos = GetWide() - m_flBoxGap - m_flRightMargin;
+			float ypos = 0.f;
 
 			// iterate over all the weapon slots
 			for ( int i = 0; i < m_iMaxSlots; i++ )

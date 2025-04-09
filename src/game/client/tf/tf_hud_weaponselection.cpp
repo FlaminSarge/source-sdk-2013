@@ -425,18 +425,17 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, int nActiveSlo
 	case HUDTYPE_BUCKETS:
 	case HUDTYPE_FASTSWITCH:
 		{
-			// calculate where to start drawing
-			int nTotalHeight = 0;
 			int xStartPos = GetWide() - m_flBoxGap - m_flRightMargin;
+			int ypos = 0;
 
 			// iterate over all the weapon slots
 			for ( int i = 0; i < m_iMaxSlots; i++ )
 			{
+				float flHeightScale = 1.f;
 				if ( i == nActiveSlot )
 				{
 					rSlot[i].wide = m_flLargeBoxWide;
 					rSlot[i].tall = m_flLargeBoxTall;
-					nTotalHeight += rSlot[i].tall;
 				}
 				else
 				{
@@ -444,25 +443,25 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, int nActiveSlo
 					// only include slot if visible OR (any slot above visible AND any slot below visible)
 					if ( ( iSlotBits >> i ) && ( iSlotBits & ( ( 1 << ( i + 1 ) ) - 1 ) ) )
 					{
-						rSlot[i].tall = m_flSmallBoxTall;
-						nTotalHeight += rSlot[i].tall + m_flBoxGap;
+						// future: scale empty boxes
 					}
 					else
 					{
-						rSlot[i].tall = 0;
+						flHeightScale = 0.f;
 					}
+					rSlot[i].tall = m_flSmallBoxTall * flHeightScale;
 				}
 
 				rSlot[i].x = xStartPos - ( rSlot[i].wide + m_flBoxGap );
+				rSlot[i].y = ypos;
+				ypos += ( rSlot[i].tall + ( m_flBoxGap * flHeightScale ) );
 			}
 
-			// now calculate ypos from total height
-			int ypos = ( GetTall() - nTotalHeight ) / 2;
+			// now offset ypos using total height
+			ypos = ( GetTall() - ypos + m_flBoxGap ) / 2;
 			for ( int i = 0; i < m_iMaxSlots; i++ )
 			{
-				rSlot[i].y = ypos;
-				// only include boxgap if slot was visible
-				ypos += rSlot[i].tall > 0 ? rSlot[i].tall + m_flBoxGap : 0;
+				rSlot[i].y += ypos;
 			}
 		}
 		break;

@@ -851,7 +851,7 @@ void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
 					DrawString( pText, msgX, msgY, ammoColor, true );
 				}
 
-				if ( slotpos == 0 || ( m_iDemoModeSlot == i ) )
+				if ( bFirstItem || ( m_iDemoModeSlot == i ) )
 				{
 					if ( IsPC() && nFastswitchMode != HUDTYPE_PLUS )
 					{

@@ -122,6 +122,7 @@ private:
 	void FastWeaponSwitch( int iWeaponSlot );
 	void PlusTypeFastWeaponSwitch( int iWeaponSlot, bool *pbPlaySwitchSound );
 	int GetVisibleSlotBits();
+	int GetVisiblePositionBits( int iWeaponSlot );
 	bool ShouldDrawInternal();
 
 	virtual	void SetSelectedWeapon( C_BaseCombatWeapon *pWeapon ) 
@@ -425,6 +426,28 @@ int CHudWeaponSelection::GetVisibleSlotBits()
 	return iSlotBits;
 }
 
+int CHudWeaponSelection::GetVisiblePositionBits( int iWeaponSlot )
+{
+	int iPosBits = 0;
+
+	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
+	if ( !player )
+		return NULL;
+
+	for ( int i = 0; i < MAX_WEAPONS; i++ )
+	{
+		C_BaseCombatWeapon *pWeapon = player->GetWeapon( i );
+		if ( !pWeapon )
+			continue;
+
+		if ( ( pWeapon->GetSlot() == iWeaponSlot ) && (pWeapon->VisibleInWeaponSelection()) )
+		{
+			iPosBits |= ( 1 << pWeapon->GetPosition() );
+		}
+	}
+
+	return iPosBits;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Figure out where to put the item model panels for this weapon
@@ -451,14 +474,32 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, SlotLayout_t *
 				float flHeightScale = 1.f;
 				if ( i == nActiveSlot )
 				{
-					rSlot[i].wide = m_flLargeBoxWide;
-					rSlot[i].tall = m_flLargeBoxTall;
+					int iPosBits = GetVisiblePositionBits( i );
+					int xpos = xStartPos;
 					for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++)
 					{
-						rSlotExtra[slotpos].wide = m_flSmallBoxWide;
-						rSlotExtra[slotpos].tall = m_flSmallBoxTall;
-						rSlotExtra[slotpos].y = ypos + ( m_flLargeBoxTall / 2 ) - ( m_flSmallBoxTall / 2 );
-						rSlotExtra[slotpos].x = xStartPos - ( m_flLargeBoxWide + m_flBoxGap + ( m_flSmallBoxWide ) * ( slotpos + 1 ) );
+						SlotLayout_t rSlotLayout = slotpos == 0 ? rSlot[i] : rSlotExtra[slotpos];
+						if ( iPosBits & ( 1 << slotpos ) )
+						{
+							rSlotLayout.wide = slotpos == nActivePosition ? m_flLargeBoxWide : m_flSmallBoxWide;
+							rSlotLayout.tall = slotpos == nActivePosition ? m_flLargeBoxTall : m_flSmallBoxTall;
+							rSlotLayout.x = xpos - ( rSlotLayout.wide + m_flBoxGap );
+							rSlotLayout.y = ypos + ( slotpos == nActivePosition ? 0 : ( m_flLargeBoxTall / 2 ) - ( m_flSmallBoxTall / 2 ) );
+							xpos -= rSlotLayout.wide;
+						}
+						else
+						{
+							rSlotLayout.wide = 0;
+							rSlotLayout.tall = 0;
+						}
+						if (slotpos == 0)
+						{
+							rSlot[i] = rSlotLayout;
+						}
+						else
+						{
+							rSlotExtra[slotpos] = rSlotLayout;
+						}
 					}
 				}
 				else
@@ -477,11 +518,11 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, SlotLayout_t *
 						flHeightScale = 0.f;
 					}
 					rSlot[i].tall = m_flSmallBoxTall * flHeightScale;
+					rSlot[i].x = xStartPos - ( rSlot[i].wide + m_flBoxGap );
+					rSlot[i].y = ypos;
 				}
 
-				rSlot[i].x = xStartPos - ( rSlot[i].wide + m_flBoxGap );
-				rSlot[i].y = ypos;
-				ypos += ( rSlot[i].tall + ( m_flBoxGap * flHeightScale ) );
+				ypos += ( ( i == nActiveSlot ? m_flLargeBoxTall : rSlot[i].tall ) + ( m_flBoxGap * flHeightScale ) );
 			}
 
 			// now offset ypos using total height
@@ -596,22 +637,18 @@ void CHudWeaponSelection::PerformLayout( void )
 
 		if ( i == iActiveSlot )
 		{
-			int iUsedPositions = 0;
 			for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
 			{
 				m_pModelPanelsExtra[slotpos]->SetVisible( false );
-				int iActualPos = ( iActivePosition + slotpos ) % MAX_WEAPON_POSITIONS;
-				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, iActualPos);
+				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
 				if ( !pWeapon )
 					continue;
 
 				if ( !pWeapon->VisibleInWeaponSelection() )
 					continue;
-				
-				bool bSelected = iActivePosition == iActualPos;
-				
-				CItemModelPanel *pModelPanel = bSelected ? m_pModelPanels[i] : m_pModelPanelsExtra[iUsedPositions];
-				SlotLayout_t rSlotLayout = bSelected ? rSlot[i] : rSlotExtra[iUsedPositions];
+								
+				CItemModelPanel *pModelPanel = slotpos == 0 ? m_pModelPanels[i] : m_pModelPanelsExtra[slotpos];
+				SlotLayout_t rSlotLayout = slotpos == 0 ? rSlot[i] : rSlotExtra[slotpos];
 
 				pModelPanel->SetItem( pWeapon->GetAttributeContainer()->GetItem() );
 
@@ -629,18 +666,18 @@ void CHudWeaponSelection::PerformLayout( void )
 
 				pModelPanel->SetPos( rSlotLayout.x, rSlotLayout.y );
 				pModelPanel->SetVisible( true );
-				if (!bSelected)
+				if (slotpos != iActivePosition)
 				{
+					pModelPanel->SetBorder( pScheme->GetBorder("TFFatLineBorder") );
 					pModelPanel->SetNameOnly( true );
 					pModelPanel->SetStandardTextColor( true );
-					iUsedPositions++;
 				}
 			}
 		}
 		else
 		{
-			m_pModelPanels[i]->SetSize( rSlot[i].wide, rSlot[ i ].tall );
-			m_pModelPanels[i]->SetPos( rSlot[i].x, rSlot[ i ].y );
+			m_pModelPanels[i]->SetSize( rSlot[i].wide, rSlot[i].tall );
+			m_pModelPanels[i]->SetPos( rSlot[i].x, rSlot[i].y );
 			// check to see if there is a weapons in this bucket
 			if ( iSlotBits & ( 1 << i ) )
 			{
@@ -789,23 +826,23 @@ void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
 	for ( int i = 0; i < m_iMaxSlots; i++ )
 	{
 		int xpos, ypos;
-		m_pModelPanels[i]->GetPos( xpos, ypos );
-		
 		int wide, tall;
-		m_pModelPanels[i]->GetSize( wide, tall );
 
 		if ( i == iActiveSlot )
 		{
 			for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
 			{
-				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, ( iActivePosition + slotpos ) % MAX_WEAPON_POSITIONS );
+				CItemModelPanel *pModelPanel = slotpos == 0 ? m_pModelPanels[i] : m_pModelPanelsExtra[slotpos];
+				pModelPanel->GetPos( xpos, ypos );
+				pModelPanel->GetSize( wide, tall );
+				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
 				if ( !pWeapon )
 					continue;
 
 				if ( !pWeapon->VisibleInWeaponSelection() )
 					continue;
 
-				if ( !pWeapon->CanBeSelected() )
+				if ( !pWeapon->CanBeSelected() && iActivePosition == slotpos )
 				{
 					int msgX = xpos + ( m_flLargeBoxWide * 0.5 );
 					int msgY = ypos + (int)m_flErrorYPos;
@@ -814,7 +851,7 @@ void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
 					DrawString( pText, msgX, msgY, ammoColor, true );
 				}
 
-				if ( pWeapon == pSelectedWeapon || ( m_iDemoModeSlot == i ) )
+				if ( slotpos == 0 || ( m_iDemoModeSlot == i ) )
 				{
 					if ( IsPC() && nFastswitchMode != HUDTYPE_PLUS )
 					{
@@ -832,6 +869,9 @@ void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
 		}
 		else
 		{
+			m_pModelPanels[i]->GetPos( xpos, ypos );
+			m_pModelPanels[i]->GetSize( wide, tall );
+
 			// check to see if there is a weapons in this bucket
 			if ( iSlotBits & ( 1 << i ) )
 			{

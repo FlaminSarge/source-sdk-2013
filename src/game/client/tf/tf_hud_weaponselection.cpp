@@ -474,31 +474,24 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, SlotLayout_t *
 				float flHeightScale = 1.f;
 				if ( i == nActiveSlot )
 				{
+					rSlot[i].wide = m_flLargeBoxWide;
+					rSlot[i].tall = m_flLargeBoxTall;
+
 					int iPosBits = GetVisiblePositionBits( i );
-					int xpos = xStartPos;
-					for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++)
+					// only set up extra boxes if multiple weapons in a slot
+					if ( iPosBits & ( iPosBits - 1 ) )
 					{
-						SlotLayout_t rSlotLayout = slotpos == 0 ? rSlot[i] : rSlotExtra[slotpos];
-						if ( iPosBits & ( 1 << slotpos ) )
+						int xpos = xStartPos - rSlot[i].wide;
+						for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
 						{
-							rSlotLayout.wide = slotpos == nActivePosition ? m_flLargeBoxWide : m_flSmallBoxWide;
-							rSlotLayout.tall = slotpos == nActivePosition ? m_flLargeBoxTall : m_flSmallBoxTall;
-							rSlotLayout.x = xpos - ( rSlotLayout.wide + m_flBoxGap );
-							rSlotLayout.y = ypos + ( slotpos == nActivePosition ? 0 : ( m_flLargeBoxTall / 2 ) - ( m_flSmallBoxTall / 2 ) );
-							xpos -= rSlotLayout.wide;
-						}
-						else
-						{
-							rSlotLayout.wide = 0;
-							rSlotLayout.tall = 0;
-						}
-						if (slotpos == 0)
-						{
-							rSlot[i] = rSlotLayout;
-						}
-						else
-						{
-							rSlotExtra[slotpos] = rSlotLayout;
+							if ( iPosBits & ( 1 << slotpos ) )
+							{
+								rSlotExtra[slotpos].wide = m_flSmallBoxWide;
+								rSlotExtra[slotpos].tall = m_flSmallBoxTall;
+								rSlotExtra[slotpos].x = xpos - ( rSlotExtra[slotpos].wide + m_flBoxGap );
+								rSlotExtra[slotpos].y = ypos + ( ( m_flLargeBoxTall / 2 ) - ( m_flSmallBoxTall / 2 ) );
+								xpos -= rSlotExtra[slotpos].wide;
+							}
 						}
 					}
 				}
@@ -518,10 +511,10 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, SlotLayout_t *
 						flHeightScale = 0.f;
 					}
 					rSlot[i].tall = m_flSmallBoxTall * flHeightScale;
-					rSlot[i].x = xStartPos - ( rSlot[i].wide + m_flBoxGap );
-					rSlot[i].y = ypos;
 				}
 
+				rSlot[i].x = xStartPos - ( rSlot[i].wide + m_flBoxGap );
+				rSlot[i].y = ypos;
 				ypos += ( ( i == nActiveSlot ? m_flLargeBoxTall : rSlot[i].tall ) + ( m_flBoxGap * flHeightScale ) );
 			}
 
@@ -634,50 +627,44 @@ void CHudWeaponSelection::PerformLayout( void )
 	for ( int i = 0; i < m_iMaxSlots; i++ )
 	{
 		m_pModelPanels[i]->SetVisible( false );
-
+		m_pModelPanels[i]->SetSize( rSlot[i].wide, rSlot[i].tall );
+		m_pModelPanels[i]->SetPos( rSlot[i].x, rSlot[i].y );
 		if ( i == iActiveSlot )
 		{
 			for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
 			{
 				m_pModelPanelsExtra[slotpos]->SetVisible( false );
-				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
+				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot( i, slotpos );
 				if ( !pWeapon )
 					continue;
 
 				if ( !pWeapon->VisibleInWeaponSelection() )
 					continue;
-								
-				CItemModelPanel *pModelPanel = slotpos == 0 ? m_pModelPanels[i] : m_pModelPanelsExtra[slotpos];
-				SlotLayout_t rSlotLayout = slotpos == 0 ? rSlot[i] : rSlotExtra[slotpos];
 
-				pModelPanel->SetItem( pWeapon->GetAttributeContainer()->GetItem() );
-
-				pModelPanel->SetSize( rSlotLayout.wide, rSlotLayout.tall );
+				m_pModelPanelsExtra[slotpos]->SetItem( pWeapon->GetAttributeContainer()->GetItem() );
+				m_pModelPanelsExtra[slotpos]->SetSize( rSlotExtra[slotpos].wide, rSlotExtra[slotpos].tall );
+				m_pModelPanelsExtra[slotpos]->SetPos( rSlotExtra[slotpos].x, rSlotExtra[slotpos].y );
+				m_pModelPanelsExtra[slotpos]->SetVisible( true );
+				m_pModelPanelsExtra[slotpos]->SetNameOnly( true );
+				m_pModelPanelsExtra[slotpos]->SetStandardTextColor( true );
 
 				vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( GetScheme() );
-				if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
+				if (slotpos == iActivePosition)
 				{
-					pModelPanel->SetBorder( pScheme->GetBorder("TFFatLineBorderBlueBG") );
+					m_pModelPanelsExtra[slotpos]->SetBorder( pPlayer->GetTeamNumber() == TF_TEAM_BLUE ? pScheme->GetBorder("TFFatLineBorderBlueBG") : pScheme->GetBorder("TFFatLineBorderRedBG") );
+
+					m_pModelPanels[i]->SetBorder( pPlayer->GetTeamNumber() == TF_TEAM_BLUE ? pScheme->GetBorder("TFFatLineBorderBlueBG") : pScheme->GetBorder("TFFatLineBorderRedBG") );
+					m_pModelPanels[i]->SetItem( pWeapon->GetAttributeContainer()->GetItem() );
+					m_pModelPanels[i]->SetVisible( true );
 				}
 				else
 				{
-					pModelPanel->SetBorder( pScheme->GetBorder("TFFatLineBorderRedBG") );
-				}
-
-				pModelPanel->SetPos( rSlotLayout.x, rSlotLayout.y );
-				pModelPanel->SetVisible( true );
-				if (slotpos != iActivePosition)
-				{
-					pModelPanel->SetBorder( pScheme->GetBorder("TFFatLineBorder") );
-					pModelPanel->SetNameOnly( true );
-					pModelPanel->SetStandardTextColor( true );
+					m_pModelPanelsExtra[slotpos]->SetBorder( pScheme->GetBorder("TFFatLineBorder") );
 				}
 			}
 		}
 		else
 		{
-			m_pModelPanels[i]->SetSize( rSlot[i].wide, rSlot[i].tall );
-			m_pModelPanels[i]->SetPos( rSlot[i].x, rSlot[i].y );
 			// check to see if there is a weapons in this bucket
 			if ( iSlotBits & ( 1 << i ) )
 			{
@@ -826,52 +813,40 @@ void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
 	for ( int i = 0; i < m_iMaxSlots; i++ )
 	{
 		int xpos, ypos;
+		m_pModelPanels[i]->GetPos( xpos, ypos );
+
 		int wide, tall;
+		m_pModelPanels[i]->GetSize( wide, tall );
 
 		if ( i == iActiveSlot )
 		{
-			for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
+			C_BaseCombatWeapon *pWeapon = GetWeaponInSlot( i, iActivePosition );
+			if ( pWeapon && pWeapon->VisibleInWeaponSelection() && !pWeapon->CanBeSelected() )
 			{
-				CItemModelPanel *pModelPanel = slotpos == 0 ? m_pModelPanels[i] : m_pModelPanelsExtra[slotpos];
-				pModelPanel->GetPos( xpos, ypos );
-				pModelPanel->GetSize( wide, tall );
-				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
-				if ( !pWeapon )
-					continue;
+				int msgX = xpos + ( m_flLargeBoxWide * 0.5 );
+				int msgY = ypos + (int)m_flErrorYPos;
+				Color ammoColor = Color( 255, 0, 0, 255 );
+				wchar_t *pText = g_pVGuiLocalize->Find( "#TF_OUT_OF_AMMO" );
+				DrawString( pText, msgX, msgY, ammoColor, true );
+			}
 
-				if ( !pWeapon->VisibleInWeaponSelection() )
-					continue;
-
-				if ( !pWeapon->CanBeSelected() && iActivePosition == slotpos )
+			if ( pWeapon == pSelectedWeapon || ( m_iDemoModeSlot == i ) )
+			{
+				// draw the number
+				if ( IsPC() && nFastswitchMode != HUDTYPE_PLUS )
 				{
-					int msgX = xpos + ( m_flLargeBoxWide * 0.5 );
-					int msgY = ypos + (int)m_flErrorYPos;
-					Color ammoColor = Color( 255, 0, 0, 255 );
-					wchar_t *pText = g_pVGuiLocalize->Find( "#TF_OUT_OF_AMMO" );
-					DrawString( pText, msgX, msgY, ammoColor, true );
+					Color numberColor = m_NumberColor;
+					numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
+					surface()->DrawSetTextColor(numberColor);
+					surface()->DrawSetTextFont(m_hNumberFont);
+					wchar_t wch = '0' + i + 1;
+					surface()->DrawSetTextPos( xpos + wide - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
+					surface()->DrawUnicodeChar(wch);
 				}
-
-				if ( bFirstItem || ( m_iDemoModeSlot == i ) )
-				{
-					if ( IsPC() && nFastswitchMode != HUDTYPE_PLUS )
-					{
-						Color numberColor = m_NumberColor;
-						numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
-						surface()->DrawSetTextColor(numberColor);
-						surface()->DrawSetTextFont(m_hNumberFont);
-						wchar_t wch = '0' + i + 1;
-						surface()->DrawSetTextPos( xpos + wide - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
-						surface()->DrawUnicodeChar(wch);
-					}
-				}
-				break;
 			}
 		}
 		else
 		{
-			m_pModelPanels[i]->GetPos( xpos, ypos );
-			m_pModelPanels[i]->GetSize( wide, tall );
-
 			// check to see if there is a weapons in this bucket
 			if ( iSlotBits & ( 1 << i ) )
 			{

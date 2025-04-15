@@ -537,6 +537,7 @@ void CHudWeaponSelection::PerformLayout( void )
 	// calculate where to start drawing
 
 	int iActiveSlot = (pSelectedWeapon ? pSelectedWeapon->GetSlot() : -1);
+	int iActivePosition = (pSelectedWeapon ? pSelectedWeapon->GetPosition() : -1);
 
 	SlotLayout_t rSlot[ MAX_WEAPON_SLOTS ];
 	ComputeSlotLayout( rSlot, iActiveSlot, fastswitch );
@@ -550,7 +551,7 @@ void CHudWeaponSelection::PerformLayout( void )
 		{
 			for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
 			{
-				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
+				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, ( iActivePosition + slotpos ) % MAX_WEAPON_POSITIONS );
 				if ( !pWeapon )
 					continue;
 
@@ -573,6 +574,7 @@ void CHudWeaponSelection::PerformLayout( void )
 
 				m_pModelPanels[i]->SetPos( rSlot[i].x, rSlot[ i ].y );
 				m_pModelPanels[i]->SetVisible( true );
+				break;
 			}
 		}
 		else
@@ -705,6 +707,7 @@ void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
 
 	// calculate where to start drawing
 	int iActiveSlot = (pSelectedWeapon ? pSelectedWeapon->GetSlot() : -1);
+	int iActivePosition = (pSelectedWeapon ? pSelectedWeapon->GetPosition() : -1);
 	int nFastswitchMode = hud_fastswitch.GetInt();
 	if ( ::input->IsSteamControllerActive() )
 	{
@@ -732,10 +735,9 @@ void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
 
 		if ( i == iActiveSlot )
 		{
-			bool bFirstItem = true;
 			for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
 			{
-				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
+				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, ( iActivePosition + slotpos ) % MAX_WEAPON_POSITIONS );
 				if ( !pWeapon )
 					continue;
 
@@ -753,20 +755,18 @@ void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
 
 				if ( pWeapon == pSelectedWeapon || ( m_iDemoModeSlot == i ) )
 				{
-					// draw the number
-					int shortcut = bFirstItem ? i + 1 : -1;
-					if ( IsPC() && shortcut >= 0 && nFastswitchMode != HUDTYPE_PLUS )
+					if ( IsPC() && nFastswitchMode != HUDTYPE_PLUS )
 					{
 						Color numberColor = m_NumberColor;
 						numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
 						surface()->DrawSetTextColor(numberColor);
 						surface()->DrawSetTextFont(m_hNumberFont);
-						wchar_t wch = '0' + shortcut;
+						wchar_t wch = '0' + i + 1;
 						surface()->DrawSetTextPos( xpos + wide - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
 						surface()->DrawUnicodeChar(wch);
 					}
 				}
-				bFirstItem = false;
+				break;
 			}
 		}
 		else

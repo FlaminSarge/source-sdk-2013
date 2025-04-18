@@ -515,7 +515,7 @@ void CHudWeaponSelection::ComputeSlotLayout( SlotLayout_t *rSlot, SlotLayout_t *
 
 				rSlot[i].x = xStartPos - ( rSlot[i].wide + m_flBoxGap );
 				rSlot[i].y = ypos;
-				ypos += ( ( i == nActiveSlot ? m_flLargeBoxTall : rSlot[i].tall ) + ( m_flBoxGap * flHeightScale ) );
+				ypos += ( rSlot[i].tall + ( m_flBoxGap * flHeightScale ) );
 			}
 
 			// now offset ypos using total height

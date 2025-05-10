@@ -555,6 +555,7 @@ void CHudWeaponSelection::PerformLayout( void )
 	// calculate where to start drawing
 
 	int iActiveSlot = (pSelectedWeapon ? pSelectedWeapon->GetSlot() : -1);
+	int iActivePosition = (pSelectedWeapon ? pSelectedWeapon->GetPosition() : -1);
 
 	SlotLayout_t rSlot[ MAX_WEAPON_SLOTS ];
 	ComputeSlotLayout( rSlot, iActiveSlot, fastswitch );
@@ -568,7 +569,7 @@ void CHudWeaponSelection::PerformLayout( void )
 		{
 			for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
 			{
-				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
+				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, ( iActivePosition + slotpos ) % MAX_WEAPON_POSITIONS );
 				if ( !pWeapon )
 					continue;
 
@@ -591,6 +592,7 @@ void CHudWeaponSelection::PerformLayout( void )
 
 				m_pModelPanels[i]->SetPos( rSlot[i].x, rSlot[ i ].y );
 				m_pModelPanels[i]->SetVisible( true );
+				break;
 			}
 		}
 		else
@@ -723,6 +725,7 @@ void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
 
 	// calculate where to start drawing
 	int iActiveSlot = (pSelectedWeapon ? pSelectedWeapon->GetSlot() : -1);
+	int iActivePosition = (pSelectedWeapon ? pSelectedWeapon->GetPosition() : -1);
 	int nFastswitchMode = hud_fastswitch.GetInt();
 	if ( ::input->IsSteamControllerActive() )
 	{
@@ -750,10 +753,9 @@ void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
 
 		if ( i == iActiveSlot )
 		{
-			bool bFirstItem = true;
 			for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
 			{
-				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
+				C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, ( iActivePosition + slotpos ) % MAX_WEAPON_POSITIONS );
 				if ( !pWeapon )
 					continue;
 
@@ -771,20 +773,18 @@ void CHudWeaponSelection::DrawSelection( C_BaseCombatWeapon *pSelectedWeapon )
 
 				if ( pWeapon == pSelectedWeapon || ( m_iDemoModeSlot == i ) )
 				{
-					// draw the number
-					int shortcut = bFirstItem ? i + 1 : -1;
-					if ( IsPC() && shortcut >= 0 && nFastswitchMode != HUDTYPE_PLUS )
+					if ( IsPC() && nFastswitchMode != HUDTYPE_PLUS )
 					{
 						Color numberColor = m_NumberColor;
 						numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
 						surface()->DrawSetTextColor(numberColor);
 						surface()->DrawSetTextFont(m_hNumberFont);
-						wchar_t wch = '0' + shortcut;
+						wchar_t wch = '0' + i + 1;
 						surface()->DrawSetTextPos( xpos + wide - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
 						surface()->DrawUnicodeChar(wch);
 					}
 				}
-				bFirstItem = false;
+				break;
 			}
 		}
 		else
@@ -940,8 +940,6 @@ void CHudWeaponSelection::OpenSelection( void )
 
 	CBaseHudWeaponSelection::OpenSelection();
 	g_pClientMode->GetViewportAnimationController()->StartAnimationSequence("OpenWeaponSelectionMenu");
-	m_iSelectedBoxPosition = 0;
-	m_iSelectedSlot = -1;
 }
 
 //-----------------------------------------------------------------------------
@@ -958,6 +956,8 @@ void CHudWeaponSelection::HideSelection( void )
 	}
 
 	m_flSelectionTime = 0;
+	m_iSelectedBoxPosition = 0;
+	m_iSelectedSlot = -1;
 	CBaseHudWeaponSelection::HideSelection();
 	g_pClientMode->GetViewportAnimationController()->StartAnimationSequence("CloseWeaponSelectionMenu");
 }
@@ -1296,48 +1296,46 @@ void CHudWeaponSelection::PlusTypeFastWeaponSwitch( int iWeaponSlot, bool *pbPla
 	if ( !pPlayer )
 		return;
 
-	int newSlot = m_iSelectedSlot;
-
 	// Changing slot number does not necessarily mean we need to change the slot - the player could be
 	// scrolling through the same slot but in the opposite direction. Slot pairs are 0,2 and 1,3 - so
 	// compare the 0 bits to see if we're within a pair. Otherwise, reset the box to the zero position.
-	if ( -1 == m_iSelectedSlot || ( ( m_iSelectedSlot ^ iWeaponSlot ) & 1 ) )
+	if ( -1 == m_iSelectedSlot || iWeaponSlot >= 4 || ( ( m_iSelectedSlot ^ iWeaponSlot ) & 1 ) )
 	{
 		// Changing vertical/horizontal direction. Reset the selected box position to zero.
-		m_iSelectedBoxPosition = 0;
 		m_iSelectedSlot = iWeaponSlot;
+
+		C_BaseCombatWeapon *pWeapon = GetFirstPos( iWeaponSlot );
+		if ( pWeapon )
+		{
+			m_iSelectedBoxPosition = pWeapon->GetPosition();
+		}
 	}
 	else
 	{
+		int newSlot = -1;
+		int newPos = -1;
+
 		// Still in the same horizontal/vertical direction. Determine which way we're moving in the slot.
-		int increment = 1;
-		if ( m_iSelectedSlot != iWeaponSlot )
+		int increment = m_iSelectedSlot == iWeaponSlot ? 1 : -1;
+
+		// Lay out the paired slots ranging from -20 to 19, where negative is the opposite slot and goes from -1 to -20.
+		for ( int slotPos = m_iSelectedBoxPosition + increment; slotPos < MAX_WEAPON_POSITIONS && slotPos >= -MAX_WEAPON_POSITIONS; slotPos += increment )
 		{
-			// Decrementing within the slot. If we're at the zero position in this slot, 
-			// jump to the zero position of the opposite slot. This also counts as our increment.
-			increment = -1;
-			if ( 0 == m_iSelectedBoxPosition )
+			int slot = slotPos < 0 ? ( m_iSelectedSlot + 2 ) % 4 : m_iSelectedSlot;
+			int pos = slotPos < 0 ? -slotPos - 1 : slotPos;
+			C_BaseCombatWeapon *pWeapon = GetWeaponInSlot( slot, pos );
+			if ( pWeapon && pWeapon->VisibleInWeaponSelection() )
 			{
-				newSlot = ( m_iSelectedSlot + 2 ) % 4;
-				increment = 0;
+				newSlot = slot;
+				newPos = pos;
+				break;
 			}
 		}
 
-		// Find out of the box position is at the end of the slot
-		int lastSlotPos = -1;
-		for ( int slotPos = 0; slotPos < MAX_WEAPON_POSITIONS; ++slotPos )
+		// Set the selected box position
+		if ( newSlot > -1 && newPos > -1 )
 		{
-			C_BaseCombatWeapon *pWeapon = GetWeaponInSlot( newSlot, slotPos );
-			if ( pWeapon )
-			{
-				lastSlotPos = slotPos;
-			}
-		}
-
-		// Increment/Decrement the selected box position
-		if ( m_iSelectedBoxPosition + increment <= lastSlotPos )
-		{
-			m_iSelectedBoxPosition += increment;
+			m_iSelectedBoxPosition = newPos;
 			m_iSelectedSlot = newSlot;
 		}
 		else
@@ -1408,13 +1406,23 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 		}
 
 	case HUDTYPE_PLUS:
-		PlusTypeFastWeaponSwitch( iSlot, &bPlaySwitchSound );
+		{
+			PlusTypeFastWeaponSwitch( iSlot, &bPlaySwitchSound );
+			C_BaseCombatWeapon *pActiveWeapon = GetSelectedWeapon();
+			if ( pActiveWeapon != NULL )
+			{
+				if ( !IsInSelectionMode() )
+				{
+					// open the weapon selection
+					OpenSelection();
+				}
 
-		// ------------------------------------------------------
-		// FALLTHROUGH! Plus and buckets both use the item model
-		// panels so fix them up in both cases.
-		// ------------------------------------------------------
-
+				InvalidateLayout();
+				m_iDemoModeSlot = -1;
+				m_flDemoStartTime = -1;
+			}
+			return;
+		}
 
 	case HUDTYPE_BUCKETS:
 		{

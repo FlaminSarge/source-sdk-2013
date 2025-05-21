@@ -219,7 +219,7 @@ void CTFHudPlayerClass::OnThink()
 	}
 
 	bool bLoadoutPositionChange = false;
-	int nLoadoutSlot = pPlayer->GetActiveTFWeapon() ? pPlayer->GetActiveTFWeapon()->GetAttributeContainer()->GetItem()->GetStaticData()->GetLoadoutSlot( m_nClass ) : LOADOUT_POSITION_PRIMARY;
+	int nLoadoutSlot = pPlayer->GetActiveTFWeapon() ? pPlayer->GetActiveTFWeapon()->GetAttributeContainer()->GetItem()->GetItemDefIndex() : LOADOUT_POSITION_PRIMARY;
 	if ( m_nLoadoutPosition != nLoadoutSlot )
 	{
 		m_nLoadoutPosition = nLoadoutSlot;
@@ -469,7 +469,7 @@ void CTFHudPlayerClass::UpdateModelPanel()
 			nClass = pPlayer->GetPlayerClass()->GetClassIndex();
 			nTeam = pPlayer->GetTeamNumber();
 
-			CTFWeaponBase *pEnt = dynamic_cast< CTFWeaponBase* >( pPlayer->GetEntityForLoadoutSlot( nItemSlot ) );
+			CTFWeaponBase *pEnt = pPlayer->IsAlive() ? pPlayer->GetActiveTFWeapon() : NULL;
 			if ( pEnt )
 			{
 				pWeapon = pEnt->GetAttributeContainer()->GetItem();
@@ -480,9 +480,10 @@ void CTFHudPlayerClass::UpdateModelPanel()
 		m_pPlayerModelPanel->SetToPlayerClass( nClass );
 		m_pPlayerModelPanel->SetTeam( nTeam );
 
+		int iItemIdx = 0;
 		if ( pWeapon )
 		{
-			m_pPlayerModelPanel->AddCarriedItem( pWeapon );
+			iItemIdx = m_pPlayerModelPanel->AddCarriedItem( pWeapon );
 		}
 
 		for ( int wbl = pPlayer->GetNumWearables()-1; wbl >= 0; wbl-- )
@@ -509,7 +510,7 @@ void CTFHudPlayerClass::UpdateModelPanel()
 			}
 		}
 
-		m_pPlayerModelPanel->HoldItemInSlot( nItemSlot );
+		m_pPlayerModelPanel->HoldItem( iItemIdx );
 	}
 }
 

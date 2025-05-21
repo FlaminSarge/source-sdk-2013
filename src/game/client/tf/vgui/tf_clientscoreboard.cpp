@@ -256,10 +256,9 @@ void CTFClientScoreBoardDialog::UpdatePlayerModel()
 
 	int nClass = pPlayer->GetPlayerClass()->GetClassIndex();
 	int nTeam = pPlayer->GetTeamNumber();
-	int nItemSlot = ( pPlayer->IsAlive() && pPlayer->GetActiveTFWeapon() ) ? pPlayer->GetActiveTFWeapon()->GetAttributeContainer()->GetItem()->GetStaticData()->GetLoadoutSlot( nClass ) : LOADOUT_POSITION_PRIMARY;
 	CEconItemView *pWeapon = NULL;
 
-	CTFWeaponBase *pEnt = dynamic_cast<CTFWeaponBase*>( pPlayer->GetEntityForLoadoutSlot( nItemSlot ) );
+	CTFWeaponBase *pEnt = pPlayer->IsAlive() ? pPlayer->GetActiveTFWeapon() : NULL;
 	if ( pEnt )
 	{
 		pWeapon = pEnt->GetAttributeContainer()->GetItem();
@@ -269,9 +268,10 @@ void CTFClientScoreBoardDialog::UpdatePlayerModel()
 	m_pPlayerModelPanel->SetToPlayerClass( nClass );
 	m_pPlayerModelPanel->SetTeam( nTeam );
 
+	int iItemIdx = 0;
 	if ( pWeapon )
 	{
-		m_pPlayerModelPanel->AddCarriedItem( pWeapon );
+		iItemIdx = m_pPlayerModelPanel->AddCarriedItem( pWeapon );
 	}
 
 	for ( int wbl = pPlayer->GetNumWearables() - 1; wbl >= 0; wbl-- )
@@ -295,7 +295,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerModel()
 		}
 	}
 
-	m_pPlayerModelPanel->HoldItemInSlot( nItemSlot );
+	m_pPlayerModelPanel->HoldItem( iItemIdx );
 }
 
 //-----------------------------------------------------------------------------

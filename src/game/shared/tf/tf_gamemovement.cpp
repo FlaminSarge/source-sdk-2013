@@ -81,6 +81,7 @@ extern ConVar cl_forwardspeed;
 extern ConVar cl_backspeed;
 extern ConVar cl_sidespeed;
 extern ConVar mp_tournament_readymode_countdown;
+extern ConVar tf_allow_sliding_taunt;
 
 #define TF_MAX_SPEED   (400 * 1.3)	// 400 is Scout max speed, and we allow up to 3% movement bonus.
 
@@ -636,8 +637,17 @@ bool CTFGameMovement::TauntMove( void )
 	{
 		VehicleMove();
 	}
-	else if ( m_pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) && m_pTFPlayer->CanMoveDuringTaunt() )
+	else if ( m_pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
 	{
+		if ( !m_pTFPlayer->CanMoveDuringTaunt() )
+		{
+			if ( tf_allow_sliding_taunt.GetBool() )
+			{
+				m_pTFPlayer->SetCurrentTauntMoveSpeed( 0.f );
+				mv->m_flClientMaxSpeed = 0.f;
+			}
+			return false;
+		}
 		m_pTFPlayer->SetTauntYaw( mv->m_vecViewAngles[YAW] );
 
 		bool bForceMoveForward = m_pTFPlayer->IsTauntForceMovingForward();

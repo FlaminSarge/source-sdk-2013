@@ -3165,9 +3165,9 @@ void CTFPlayer::PlayerRunCommand( CUserCmd *ucmd, IMoveHelper *moveHelper )
 		// For some taunts, it is critical that the player not move once they start
 		if ( !CanMoveDuringTaunt() )
 		{
-			ucmd->forwardmove = 0;
-			ucmd->upmove = 0;
-			ucmd->sidemove = 0;
+			//ucmd->forwardmove = 0;
+			//ucmd->upmove = 0;
+			//ucmd->sidemove = 0;
 			ucmd->viewangles = pl.v_angle;
 		}
 

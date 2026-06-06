@@ -56,6 +56,7 @@ ConVar  tf_parachute_maxspeed_z( "tf_parachute_maxspeed_z", "-100.0f", FCVAR_DEV
 ConVar  tf_parachute_maxspeed_onfire_z( "tf_parachute_maxspeed_onfire_z", "-100.0f", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Max Z Speed when on Fire and Parachute is deployed" );
 ConVar  tf_parachute_aircontrol( "tf_parachute_aircontrol", "2.5f", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Multiplier for how much air control players have when Parachute is deployed" );
 ConVar	tf_parachute_deploy_toggle_allowed( "tf_parachute_deploy_toggle_allowed", "0", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+ConVar	tf_parachute_maxspeed_fix("tf_parachute_maxspeed_fix", "0", FCVAR_REPLICATED );
 
 ConVar  tf_halloween_kart_aircontrol( "tf_halloween_kart_aircontrol", "1.2f", FCVAR_CHEAT | FCVAR_REPLICATED, "Multiplier for how much air control players have when in Kart Mode" );
 ConVar	tf_ghost_up_speed( "tf_ghost_up_speed", "300.f", FCVAR_CHEAT | FCVAR_REPLICATED, "Speed that ghost go upward while holding jump key" );
@@ -2626,20 +2627,33 @@ void CTFGameMovement::FullWalkMove()
 		if ( m_pTFPlayer->m_Shared.InCond( TF_COND_PARACHUTE_ACTIVE ) && mv->m_vecVelocity[2] < 0 )
 		{
 			mv->m_vecVelocity[2] = Max( mv->m_vecVelocity[2], m_pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) ? tf_parachute_maxspeed_onfire_z.GetFloat() : tf_parachute_maxspeed_z.GetFloat() );
-
 			float flDrag = tf_parachute_maxspeed_xy.GetFloat();
-			float flSpeedXY = mv->m_vecVelocity.Length2D();
-			if ( flSpeedXY > 0.0f && flSpeedXY > flDrag )
+			if ( tf_parachute_maxspeed_fix.GetBool() )
+			{
+				float flSpeedXY = mv->m_vecVelocity.Length2D();
+				if ( flSpeedXY > 0.0f && flSpeedXY > flDrag )
+				{
+					// Instead of clamping, we'll dampen
+					float flReduction = ( flSpeedXY - flDrag ) / 3.0f - 10.0f;
+					float flMaxSpeed = Max( flDrag, flDrag + flReduction );
+					if ( flMaxSpeed >= 0.0f && flSpeedXY > flMaxSpeed )
+					{
+						float flScale = flMaxSpeed / flSpeedXY;
+						mv->m_vecVelocity[0] *= flScale;
+						mv->m_vecVelocity[1] *= flScale;
+					}
+				}
+			}
+			else
 			{
 				// Instead of clamping, we'll dampen
-				float flReduction = ( flSpeedXY - flDrag ) / 3.0f - 10.0f;
-				float flMaxSpeed = Max( flDrag, flDrag + flReduction );
-				if ( flMaxSpeed >= 0.0f && flSpeedXY > flMaxSpeed )
-				{
-					float flScale = flMaxSpeed / flSpeedXY;
-					mv->m_vecVelocity[0] *= flScale;
-					mv->m_vecVelocity[1] *= flScale;
-				}
+				float flSpeedX = abs( mv->m_vecVelocity[0] );
+				float flSpeedY = abs( mv->m_vecVelocity[1] );
+				float flReductionX = flSpeedX > flDrag ? ( flSpeedX - flDrag ) / 3.0f - 10.0f : 0;
+				float flReductionY = flSpeedY > flDrag ? ( flSpeedY - flDrag ) / 3.0f - 10.0f : 0;
+
+				mv->m_vecVelocity[0] = Clamp( mv->m_vecVelocity[0], -flDrag - flReductionX, flDrag + flReductionX );
+				mv->m_vecVelocity[1] = Clamp( mv->m_vecVelocity[1], -flDrag - flReductionY, flDrag + flReductionY );
 			}
 		}
 
